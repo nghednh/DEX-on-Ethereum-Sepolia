@@ -1,0 +1,945 @@
+from root folder mean from my-dex folder?
+
+Step 1: Environment Setup
+1. Install Node.js
+Download and install: https://nodejs.org/
+
+2. Install Git
+https://git-scm.com/
+
+Step 2: Initialize Hardhat Project
+bash
+Copy
+Edit
+# Create project folder
+mkdir my-dex && cd my-dex
+
+# Initialize Hardhat project
+npm init -y
+npm install --save-dev hardhat
+npx hardhat
+# Choose "Create a basic sample project"
+Install required packages:
+
+bash
+Copy
+Edit
+npm install --save-dev @nomicfoundation/hardhat-toolbox dotenv
+npm install ethers
+Step 3: Write Your Solidity DEX Contract
+Create file: contracts/SimpleDEX.sol
+
+solidity
+Copy
+Edit
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+interface IERC20 {
+    function transfer(address to, uint amount) external returns (bool);
+    function transferFrom(address from, address to, uint amount) external returns (bool);
+}
+
+contract SimpleDEX {
+    address public token;
+    address public owner;
+
+    constructor(address _token) {
+        token = _token;
+        owner = msg.sender;
+    }
+
+    function buy() external payable {
+        require(msg.value > 0, "Send ETH to buy tokens");
+        uint amount = msg.value * 100;
+        IERC20(token).transfer(msg.sender, amount);
+    }
+
+    function sell(uint amount) external {
+        uint ethAmount = amount / 100;
+        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        payable(msg.sender).transfer(ethAmount);
+    }
+
+    receive() external payable {}
+}
+Step 4: Set Up .env and Hardhat Config
+.env
+env
+Copy
+Edit
+PRIVATE_KEY=your_metamask_private_key_without_0x
+INFURA_API_KEY=your_infura_project_id
+hardhat.config.js
+js
+Copy
+Edit
+require("@nomicfoundation/hardhat-toolbox");
+require("dotenv").config();
+
+module.exports = {
+  solidity: "0.8.20",
+  networks: {
+    sepolia: {
+      url: https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY},
+      accounts: [0x${process.env.PRIVATE_KEY}]
+    }
+  }
+};
+Step 5: Deploy Script
+Create scripts/deploy.js:
+
+js
+Copy
+Edit
+const hre = require("hardhat");
+
+async function main() {
+  const [deployer] = await hre.ethers.getSigners();
+  console.log("Deploying with:", deployer.address);
+
+  const DEX = await hre.ethers.getContractFactory("SimpleDEX");
+  const dex = await DEX.deploy("0xYourERC20TokenAddressHere");
+  await dex.deployed();
+
+  console.log("DEX deployed at:", dex.address);
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
+Deploy:
+
+bash
+Copy
+Edit
+npx hardhat run scripts/deploy.js --network sepolia
+Step 6: Create React Frontend
+bash
+Copy
+Edit
+# From root folder
+npx create-react-app frontend
+cd frontend
+npm install ethers
+Replace src/App.js:
+jsx
+Copy
+Edit
+import { useEffect, useState } from "react";
+import { ethers } from "ethers";
+import './App.css';
+
+const DEX_ABI = [/* paste ABI from Hardhat build here */];
+const DEX_ADDRESS = "0xYourContractAddressHere";
+
+function App() {
+  const [provider, setProvider] = useState(null);
+  const [signer, setSigner] = useState(null);
+  const [dexContract, setDexContract] = useState(null);
+
+  useEffect(() => {
+    const load = async () => {
+      const prov = new ethers.BrowserProvider(window.ethereum);
+      await prov.send("eth_requestAccounts", []);
+      const signer = await prov.getSigner();
+      const dex = new ethers.Contract(DEX_ADDRESS, DEX_ABI, signer);
+
+      setProvider(prov);
+      setSigner(signer);
+      setDexContract(dex);
+    };
+    load();
+  }, []);
+
+  const buyTokens = async () => {
+    const tx = await dexContract.buy({ value: ethers.parseEther("0.01") });
+    await tx.wait();
+    alert("Tokens bought!");
+  };
+
+  const sellTokens = async () => {
+    const tx = await dexContract.sell(100); // selling 100 tokens
+    await tx.wait();
+    alert("Tokens sold!");
+  };
+
+  return (
+    <div className="App">
+      <h1>Simple DEX</h1>
+      <button onClick={buyTokens}>Buy Tokens</button>
+      <button onClick={sellTokens}>Sell Tokens</button>
+    </div>
+  );
+}
+
+export default App;
+Paste the contract ABI from artifacts/contracts/SimpleDEX.sol/SimpleDEX.json.
+
+Step 7: Run Frontend
+bash
+Copy
+Edit
+npm start
+Open: http://localhost:3000
+
+Connect MetaMask and use the interface!
+
+Next Steps (Optional but Recommended)
+Deploy an ERC20 token for testing.
+
+Add UI to show balances and confirmations.
+
+Deploy to mainnet by changing the network in hardhat.config.js.
+
+
+ChatGPT said:
+Yes, "from root folder" means from the my-dex folder — the root of your DEX project that you created with:
+
+bash
+Copy
+Edit
+mkdir my-dex && cd my-dex
+So when the tutorial says:
+
+bash
+Copy
+Edit
+# From root folder
+npx create-react-app frontend
+It means you should run that command while you're inside the my-dex folder, so that the React frontend will be created in a subfolder called frontend within your project structure:
+
+lua
+Copy
+Edit
+my-dex/
+├── contracts/
+│   └── SimpleDEX.sol
+├── scripts/
+│   └── deploy.js
+├── frontend/
+│   └── (React app files here)
+├── hardhat.config.js
+├── .env
+├── package.json
+...
+Would you like a visual folder structure diagram to help clarify?
+
+
+
+
+
+
+
+You said:
+D:\dex\my-dex>npx create-react-app frontend
+Need to install the following packages:
+create-react-app@5.1.0
+Ok to proceed? (y) cd frontend
+
+npm error canceled
+npm error A complete log of this run can be found in: C:\Users\nghed\AppData\Local\npm-cache\_logs\2025-05-08T14_12_07_783Z-debug-0.log
+ChatGPT said:
+The issue you're encountering happened because you accidentally typed two commands together:
+
+bash
+Copy
+Edit
+npx create-react-app frontend
+Ok to proceed? (y) cd frontend
+This line should have been two separate commands. Instead, it confused npm and likely led to a canceled process.
+
+✅ Fix:
+Do the following step-by-step:
+
+Run only this command first:
+
+bash
+Copy
+Edit
+npx create-react-app frontend
+You’ll see:
+
+pgsql
+Copy
+Edit
+Need to install the following packages: create-react-app@5.1.0
+Ok to proceed? (y)
+Type y and press Enter when prompted.
+
+Wait for it to complete (it may take a couple of minutes).
+
+Once it's done, navigate into the folder:
+
+bash
+Copy
+Edit
+cd frontend
+Then continue with:
+
+bash
+Copy
+Edit
+npm install ethers
+Let me know if you want help checking the error log or restarting from a clean state.
+
+
+
+
+
+
+
+You said:
+const DEX_ABI = [/* paste ABI from Hardhat build here */];
+const DEX_ADDRESS = "0xYourContractAddressHere";
+
+what is replace these
+
+
+ChatGPT said:
+Great question!
+
+To replace DEX_ABI and DEX_ADDRESS, follow these steps after you've successfully compiled and deployed your contract with Hardhat:
+
+🔹 1. Replace DEX_ABI
+The ABI (Application Binary Interface) is generated by Hardhat after you compile your contract. You can find it here:
+
+bash
+Copy
+Edit
+artifacts/contracts/SimpleDEX.sol/SimpleDEX.json
+Steps:
+Open the file:
+my-dex/artifacts/contracts/SimpleDEX.sol/SimpleDEX.json
+
+Find the "abi" field in that JSON.
+
+Copy the entire value of the "abi" key — it will look like an array of JSON objects.
+
+Then in your App.js, replace this:
+
+js
+Copy
+Edit
+const DEX_ABI = [/* paste ABI from Hardhat build here */];
+With:
+
+js
+Copy
+Edit
+const DEX_ABI = [ { "inputs": [...], "name": "buy", ... }, ... ];
+(Your actual ABI will be much longer — just copy the entire "abi" array.)
+
+🔹 2. Replace DEX_ADDRESS
+This is the address where your contract was deployed. You’ll get it when you run this command:
+
+bash
+Copy
+Edit
+npx hardhat run scripts/deploy.js --network sepolia
+Look for a line like this in the output:
+
+yaml
+Copy
+Edit
+DEX deployed at: 0xAbC123...456
+Copy that deployed address and replace this line in App.js:
+
+js
+Copy
+Edit
+const DEX_ADDRESS = "0xYourContractAddressHere";
+With:
+
+js
+Copy
+Edit
+const DEX_ADDRESS = "0xAbC123...456"; // your actual deployed contract address
+Would you like me to help extract the ABI from your file if you paste the SimpleDEX.json here?
+
+
+
+
+
+
+
+You said:
+explain that app, how to use that
+ChatGPT said:
+Absolutely! Let me explain how the App.js React file works and how you use the DEX frontend in practice:
+
+🔍 What the App Does
+This is a basic frontend for interacting with your SimpleDEX smart contract. It allows users to:
+
+Buy tokens by sending ETH to the contract.
+
+Sell tokens back to the contract in exchange for ETH.
+
+It connects to your Ethereum wallet (MetaMask), signs transactions, and calls the buy and sell functions of your deployed smart contract.
+
+⚙️ How the App Works (Line by Line)
+🧠 React Setup & Ethers
+js
+Copy
+Edit
+import { useEffect, useState } from "react";
+import { ethers } from "ethers";
+useEffect is a React hook that runs when the app loads.
+
+ethers is the JavaScript library to connect to Ethereum.
+
+⚙️ Setup Variables
+js
+Copy
+Edit
+const DEX_ABI = [...]; // ABI of your smart contract
+const DEX_ADDRESS = "0x..."; // Deployed contract address
+🏗 Initialize Web3 and Contract
+js
+Copy
+Edit
+useEffect(() => {
+  const load = async () => {
+    const prov = new ethers.BrowserProvider(window.ethereum); // connect MetaMask
+    await prov.send("eth_requestAccounts", []); // request access
+    const signer = await prov.getSigner(); // get wallet signer
+    const dex = new ethers.Contract(DEX_ADDRESS, DEX_ABI, signer); // connect to DEX contract
+    setProvider(prov);
+    setSigner(signer);
+    setDexContract(dex);
+  };
+  load();
+}, []);
+🔘 Functions to Interact with Contract
+Buy tokens (send ETH to contract):
+
+js
+Copy
+Edit
+const buyTokens = async () => {
+  const tx = await dexContract.buy({ value: ethers.parseEther("0.01") });
+  await tx.wait();
+  alert("Tokens bought!");
+};
+Sell tokens (transfer tokens and receive ETH):
+
+js
+Copy
+Edit
+const sellTokens = async () => {
+  const tx = await dexContract.sell(100); // selling 100 tokens
+  await tx.wait();
+  alert("Tokens sold!");
+};
+🧪 How to Use the App
+✅ Prerequisites:
+MetaMask installed and connected to the Sepolia testnet.
+
+Some Sepolia ETH in your MetaMask wallet.
+
+Your deployed contract address added to DEX_ADDRESS.
+
+ABI from build file pasted into DEX_ABI.
+
+🖱 Steps to Use:
+Start the React app:
+
+bash
+Copy
+Edit
+npm start
+Open your browser at http://localhost:3000
+
+Allow MetaMask to connect when prompted.
+
+You’ll see:
+
+Buy Tokens button → Sends 0.01 ETH to contract, and gets 1 ETH * 100 = 100 tokens.
+
+Sell Tokens button → Sends 100 tokens to contract, and gets back 0.01 ETH.
+
+🧩 Notes:
+You must have approved the DEX to transfer your tokens (e.g., via approve() if you deploy an ERC20 token).
+
+This example assumes the ERC20 contract allows transfer without approval (not always the case — you may need to implement or call approve()).
+
+Would you like me to walk you through deploying a simple ERC20 token to test this with?
+
+
+
+
+
+
+
+You said:
+Uncaught runtime errors:
+×
+ERROR
+missing revert data (action="estimateGas", data=null, reason=null, transaction={ "data": "0xa6f2ae3a", "from": "0x985C2dF509A3Ef6F348de625a1B92F03Cc9Bf258", "to": "0x985C2dF509A3Ef6F348de625a1B92F03Cc9Bf258" }, invocation=null, revert=null, code=CALL_EXCEPTION, version=6.14.0)
+    at makeError (http://localhost:3000/static/js/bundle.js:23773:15)
+    at getBuiltinCallException (http://localhost:3000/static/js/bundle.js:7462:68)
+    at AbiCoder.getBuiltinCallException (http://localhost:3000/static/js/bundle.js:7568:12)
+    at BrowserProvider.getRpcError (http://localhost:3000/static/js/bundle.js:19731:70)
+    at BrowserProvider.getRpcError (http://localhost:3000/static/js/bundle.js:18824:18)
+    at http://localhost:3000/static/js/bundle.js:19296:29
+
+
+ChatGPT said:
+That error message:
+
+java
+Copy
+Edit
+missing revert data (action="estimateGas", ... code=CALL_EXCEPTION)
+means your smart contract function call failed or reverted, but without returning an explicit reason, which makes debugging harder.
+
+Let’s break it down and solve it step by step.
+
+🛠️ Likely Causes
+❌ You're calling a function on the wrong contract address.
+This part of the error is telling:
+
+json
+Copy
+Edit
+"to": "0x985C2dF509A3Ef6F348de625a1B92F03Cc9Bf258"
+That means you're calling the DEX contract at your own wallet address, which is wrong. The contract address should be different from your wallet address.
+
+So likely this happened:
+
+You mistakenly used your MetaMask address as the DEX_ADDRESS.
+
+✅ Solution
+🔍 Step 1: Confirm Contract Address
+Check your deployed contract address from the output of:
+
+bash
+Copy
+Edit
+npx hardhat run scripts/deploy.js --network sepolia
+You should see:
+
+csharp
+Copy
+Edit
+DEX deployed at: 0xABCD1234... (a different address from your MetaMask)
+Replace this line in App.js:
+
+js
+Copy
+Edit
+const DEX_ADDRESS = "0x985C2dF509A3Ef6F348de625a1B92F03Cc9Bf258"; // WRONG
+With:
+
+js
+Copy
+Edit
+const DEX_ADDRESS = "0xABCD1234..."; // ✅ Your deployed DEX contract address
+🧪 Step 2: Rebuild Frontend
+After updating DEX_ADDRESS:
+
+bash
+Copy
+Edit
+npm start
+✅ Bonus: Add a Check for Contract Instance
+Before calling functions, you can guard against null:
+
+js
+Copy
+Edit
+if (!dexContract) {
+  alert("DEX contract not connected yet");
+  return;
+}
+Would you like help verifying your deployed address or checking if the contract deployed correctly to Sepolia?
+
+
+
+
+
+
+
+You said:
+for this code, if i click buy i will send ETH out right? but what token i receive
+
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+interface IERC20 {
+    function transfer(address to, uint amount) external returns (bool);
+    function transferFrom(address from, address to, uint amount) external returns (bool);
+}
+
+contract SimpleDEX {
+    address public token;
+    address public owner;
+
+    constructor(address _token) {
+        token = _token;
+        owner = msg.sender;
+    }
+
+    function buy() external payable {
+        require(msg.value > 0, "Send ETH to buy tokens");
+        uint amount = msg.value * 100;
+        IERC20(token).transfer(msg.sender, amount);
+    }
+
+    function sell(uint amount) external {
+        uint ethAmount = amount / 100;
+        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        payable(msg.sender).transfer(ethAmount);
+    }
+
+    receive() external payable {}
+}
+
+
+ChatGPT said:
+Excellent question — yes, when you click "Buy", you are sending ETH to the contract, but what you receive in return is entirely dependent on this line:
+
+solidity
+Copy
+Edit
+IERC20(token).transfer(msg.sender, amount);
+That token address is the one passed to the constructor when the contract is deployed:
+
+solidity
+Copy
+Edit
+constructor(address _token) {
+    token = _token;
+    owner = msg.sender;
+}
+So:
+
+✅ What Token Do You Receive?
+You will receive whatever ERC-20 token address you passed into the constructor when you deployed the DEX contract.
+
+If you deployed like this:
+
+js
+Copy
+Edit
+const dex = await DEX.deploy("0xYourERC20TokenAddressHere");
+Then users receive tokens from that token contract (0xYourERC20TokenAddressHere).
+
+🧪 What Happens if You Don't Deploy Your Own Token?
+If:
+
+You passed in a random or invalid address (or your wallet address by mistake),
+
+Or you didn’t deploy an ERC20 token beforehand,
+
+Then this function:
+
+solidity
+Copy
+Edit
+IERC20(token).transfer(msg.sender, amount);
+will fail silently or revert, since there's no token contract to interact with or it doesn't have a balance.
+
+🛠️ How to Fix / Test This
+✅ Step 1: Deploy a Test ERC-20 Token
+Here's a simple one:
+
+solidity
+Copy
+Edit
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+contract TestToken is ERC20 {
+    constructor() ERC20("Test Token", "TST") {
+        _mint(msg.sender, 1000000 * 10 ** decimals()); // Mint 1M tokens to deployer
+    }
+}
+Save as contracts/TestToken.sol
+
+Compile & deploy it
+
+Copy the deployed token address
+
+✅ Step 2: Deploy SimpleDEX with That Token Address
+Now redeploy your DEX:
+
+js
+Copy
+Edit
+const dex = await DEX.deploy("0xYourTestTokenAddress");
+Make sure your DEX contract holds enough tokens:
+
+Use TestToken.transfer(dex.address, 1000000 * 10 ** 18) from your wallet.
+
+✅ Step 3: Use React Frontend
+Now, when you:
+
+Click Buy ➜ Send 0.01 ETH ➜ You receive 0.01 * 100 = 1 TST
+
+Click Sell ➜ Send 100 TST ➜ You receive 1 ETH
+
+(Note: You may need to approve DEX to spend your TST before selling.)
+
+Would you like a deployable test token and approval script to go with this?
+
+Yes, you're absolutely right — here's the breakdown:
+
+✅ What the Code Does
+This part:
+solidity
+Copy
+Edit
+constructor() ERC20("Test Token", "TST") {
+    _mint(msg.sender, 1000000 * 10 ** decimals());
+}
+Means:
+
+When you deploy TestToken, you (the deployer) receive 1,000,000 TST tokens in your wallet.
+
+The decimals() function (from ERC20) returns 18 by default, so it's:
+
+csharp
+Copy
+Edit
+1,000,000 * 10^18 = 1 million tokens with 18 decimal places
+✅ Will Clicking "Buy" Subtract from That Amount?
+Not automatically — the DEX contract (SimpleDEX) doesn’t hold any tokens when deployed.
+
+You minted all tokens to your own address (the deployer), not to the DEX.
+
+So when this line runs in buy():
+
+solidity
+Copy
+Edit
+IERC20(token).transfer(msg.sender, amount);
+It tries to transfer tokens from the DEX contract's balance, but the DEX has zero unless you manually send it tokens.
+
+🛠️ What You Need to Do
+Step 1: Transfer Tokens to DEX
+After deploying TestToken and SimpleDEX, run:
+
+js
+Copy
+Edit
+const [owner] = await ethers.getSigners();
+const token = await ethers.getContractAt("TestToken", testTokenAddress);
+await token.transfer(simpleDexAddress, ethers.parseUnits("100000", 18));
+That gives the DEX 100,000 TST to sell.
+
+Step 2: Now the DEX Can Sell
+When you call buy() from the React app:
+
+You send ETH (e.g. 0.01)
+
+DEX calculates: amount = 0.01 * 100 = 1 TST
+
+It transfers 1 TST to you from its own balance
+
+So yes — after you send tokens to the DEX, clicking Buy does subtract from the DEX's token balance, not your personal 1M tokens.
+
+Would you like a deployment script that handles both token and DEX setup for you?
+
+
+
+
+
+
+
+You said:
+it still work normal if that token stay in the deploy address right?
+ChatGPT said:
+Great question — and the answer is no, it won’t work unless the tokens are actually sent to the DEX contract address.
+
+🔒 Why?
+Your SimpleDEX contract transfers tokens from its own balance when users click Buy:
+
+solidity
+Copy
+Edit
+IERC20(token).transfer(msg.sender, amount);
+This line means:
+
+The DEX contract is trying to send tokens.
+
+So the DEX contract must hold those tokens in its balance.
+
+🧱 ERC-20 tokens don't allow pulling from other addresses automatically
+Even if your deployer wallet holds 1 million tokens, the DEX contract cannot spend those tokens unless:
+
+The deployer calls approve() to let the DEX spend on its behalf, and then...
+
+The DEX uses transferFrom() — but your DEX uses just transfer().
+
+So in your case:
+
+solidity
+Copy
+Edit
+IERC20(token).transfer(msg.sender, amount);
+👆 means the tokens must already be in the DEX contract’s wallet.
+
+✅ What You Should Do
+After deploying your token and DEX, run this once (in script or Hardhat console):
+
+js
+Copy
+Edit
+await token.transfer(dex.address, ethers.parseUnits("100000", 18));
+This sends 100,000 tokens from your wallet to the DEX, so it can sell them.
+
+🚫 What Happens If You Don’t Transfer?
+Users send ETH ➜ DEX tries to give tokens ➜ transfer() fails ➜ transaction reverts.
+
+The React frontend may show a vague error or "missing revert data" (like you saw earlier).
+
+Would you like help writing a script that does this setup in one go after deployment?
+
+
+
+
+
+
+
+You said:
+so i should update the smart contract to also get the token from deploy address to the buyer address?
+
+
+ChatGPT said:
+You can update the smart contract to transfer tokens from the deployer (or any other external address) to the buyer, but it's not recommended unless:
+
+You understand the security implications.
+
+You know how to handle approve() and transferFrom() properly.
+
+Let me explain both options:
+
+✅ Option 1 (Recommended): Transfer tokens to the DEX contract
+Keep your contract unchanged, and after deployment, run:
+
+js
+Copy
+Edit
+await token.transfer(dex.address, ethers.parseUnits("100000", 18));
+This way, the DEX holds tokens, and this line works:
+
+solidity
+Copy
+Edit
+IERC20(token).transfer(msg.sender, amount);
+✅ Simple
+✅ Secure
+✅ No extra logic needed
+
+⚠️ Option 2: Let DEX pull tokens from deployer account
+You'd have to rewrite buy() like this:
+
+solidity
+Copy
+Edit
+function buy() external payable {
+    require(msg.value > 0, "Send ETH to buy tokens");
+    uint amount = msg.value * 100;
+    IERC20(token).transferFrom(owner, msg.sender, amount);
+}
+But this only works if:
+
+The owner (token holder) calls:
+
+js
+Copy
+Edit
+await token.approve(dex.address, ethers.parseUnits("1000000", 18));
+That approval allows the DEX to move tokens from the owner account.
+
+🚫 Downsides of Option 2
+More complex setup (must approve before every buy)
+
+Less secure (DEX can drain all of owner's tokens if bugged or abused)
+
+Harder to audit and maintain
+
+🧠 Summary
+Option	Token Flow	Setup Needed	Recommended?
+Transfer to DEX	DEX ➜ Buyer	Send tokens to DEX address	✅ Yes
+Pull from owner	Owner ➜ Buyer (via DEX)	Owner must approve DEX to spend	❌ No
+
+Would you like me to give you a one-click script that transfers tokens to the DEX after deployment?
+
+
+
+
+
+
+
+You said:
+so both ETH and TST will send to address dex when click buy and send to the address?
+
+
+ChatGPT said:
+Great question! Let's break it down clearly based on your current buy() and sell() functions:
+
+🔁 buy() Function
+solidity
+Copy
+Edit
+function buy() external payable {
+    require(msg.value > 0, "Send ETH to buy tokens");
+    uint amount = msg.value * 100;
+    IERC20(token).transfer(msg.sender, amount);
+}
+What happens when user clicks Buy:
+User sends ETH to the DEX contract.
+
+msg.value is the ETH attached to the transaction.
+
+The DEX keeps that ETH (it becomes the contract’s ETH balance).
+
+DEX sends tokens (TST) to the user:
+
+It transfers amount = msg.value * 100 TST from its own token balance to the user.
+
+✅ So:
+
+ETH goes to DEX
+
+TST goes to User
+
+🔁 sell() Function
+solidity
+Copy
+Edit
+function sell(uint amount) external {
+    uint ethAmount = amount / 100;
+    IERC20(token).transferFrom(msg.sender, address(this), amount);
+    payable(msg.sender).transfer(ethAmount);
+}
+What happens when user clicks Sell:
+User must first approve the DEX to spend amount of TST using:
+
+js
+Copy
+Edit
+await token.approve(dex.address, amount);
+User sends TST (via transferFrom) to the DEX.
+
+DEX sends ETH back to the user:
+
+The DEX calculates how much ETH to send (1 ETH per 100 tokens) and transfers it.
+
+✅ So:
+
+TST goes to DEX
+
+ETH goes to User
+
+🧠 Summary
+Action	ETH flow	TST flow
+buy()	User ➜ DEX	DEX ➜ User
+sell()	DEX ➜ User	User ➜ DEX
+
+Let me know if you want help adding balance display to the UI so users can see ETH & TST amounts live.
