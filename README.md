@@ -26,6 +26,7 @@ Before you begin, make sure you have the following installed:
 
 ## 📁 Project Structure
 
+- `promt_queries` – All (major part, minor one is hard to collect) generated queries to LLMs along with the project 
 - `contracts/` – Solidity smart contract `MultiTokenDEX.sol`
 - `scripts/` – Hardhat deployment script
 - `.env` – Environment variables for deployment
